@@ -134,5 +134,5 @@ aws ecs create-service \
     --desired-count 1 \
     --launch-type FARGATE \
     --platform-version LATEST \
-    --load-balancers "targetGroupArn=$dashApp1TargetGroupArn,containerName=dash-app-1,containerPort=8050"
+    --load-balancers "targetGroupArn=$dashApp1TargetGroupArn,containerName=dash-app-1,containerPort=8050" \
     --network-configuration "awsvpcConfiguration={subnets=[$privateSubnet1,$privateSubnet2],securityGroups=[$dashSecurityGroupId],assignPublicIp=DISABLED}" --output text

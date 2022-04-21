@@ -1,7 +1,7 @@
 # Update service desired count to 0
 aws ecs update-service --cluster "dash-ecs-cluster" --service "dash-app-1-service" --desired-count 0 --output text
 
-sleep 10
+sleep 30
 
 # Fetch all the definition revisions for dash-app-1
 dashApp1TaskDefnArns=`aws ecs list-task-definitions --family-prefix dash-app-1 --query taskDefinitionArns[] --output text`
@@ -114,7 +114,7 @@ natGetewayId=`aws ec2 describe-nat-gateways --query NatGateways[0].NatGatewayId 
 aws ec2 delete-nat-gateway --nat-gateway-id $natGetewayId --output text
 echo "Nat gatway deleted $natGetewayId"
 
-sleep 40
+sleep 150
 
 # Get all elastic ips
 elasticAllocationId=`aws ec2 describe-addresses --query Addresses[0].AllocationId --output text`
