@@ -1,0 +1,30 @@
+{
+    "executionRoleArn": "arn:aws:iam::734486874644:role/ecsTaskExecutionRole",
+    "containerDefinitions": [
+        {
+            "portMappings": [
+                {
+                    "protocol": "tcp",
+                    "containerPort": 8050
+                }
+            ],
+            "cpu": 0,
+            "environment": [
+                {
+                    "name": "PORT",
+                    "value": "8050"
+                }
+            ],
+            "image": "montumodi/test-dash",
+            "name": "dash-app-1"
+        }
+    ],
+    "memory": "1024",
+    "cpu": "0.25 vCPU",
+    "taskRoleArn": "arn:aws:iam::734486874644:role/ecsTaskExecutionRole",
+    "family": "dash-app-1",
+    "requiresCompatibilities": [
+        "FARGATE"
+    ],
+    "networkMode": "awsvpc"
+}

@@ -1,0 +1,8 @@
+[
+    {
+        "Field": "path-pattern",
+        "PathPatternConfig": {
+            "Values": ["/apps/dash-app-1*"]
+        }
+    }
+]
