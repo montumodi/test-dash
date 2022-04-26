@@ -262,6 +262,17 @@ resource "aws_lb_target_group" "dash-app-1-tg" {
   }
 }
 
+resource "aws_lb_target_group" "dash-app-2-tg" {
+  name        = "dash-app-2-tg"
+  port        = 8050
+  protocol    = "HTTP"
+  target_type = "ip"
+  vpc_id      = aws_vpc.main.id
+  health_check {
+    path = "/apps/dash-app-2/"
+  }
+}
+
 resource "aws_lb" "dash-load-balancer" {
   name               = "dash-load-balancer"
   internal           = false
@@ -286,7 +297,7 @@ resource "aws_lb_listener" "default_listener" {
   }
 }
 
-resource "aws_lb_listener_rule" "host_based_weighted_routing" {
+resource "aws_lb_listener_rule" "path_based_routing_for_dash_app_1" {
   listener_arn = aws_lb_listener.default_listener.arn
   priority     = 99
 
@@ -302,6 +313,22 @@ resource "aws_lb_listener_rule" "host_based_weighted_routing" {
   }
 }
 
+resource "aws_lb_listener_rule" "path_based_routing_for_dash_app_2" {
+  listener_arn = aws_lb_listener.default_listener.arn
+  priority     = 100
+
+  action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.dash-app-2-tg.arn
+  }
+
+  condition {
+    path_pattern {
+      values = ["/apps/dash-app-2*"]
+    }
+  }
+}
+
 resource "aws_ecs_service" "dash-app-1-service" {
   name            = "dash-app-1-service"
   cluster         = aws_ecs_cluster.dash-ecs-cluster.id
@@ -312,6 +339,25 @@ resource "aws_ecs_service" "dash-app-1-service" {
   load_balancer {
     target_group_arn = aws_lb_target_group.dash-app-1-tg.arn
     container_name   = "dash-app-1"
+    container_port   = 8050
+  }
+
+  network_configuration {
+    security_groups = [ aws_security_group.Dash-SG.id ]
+    subnets = [ aws_subnet.private-subet-zone-a.id, aws_subnet.private-subet-zone-b.id ]
+  }
+}
+
+resource "aws_ecs_service" "dash-app-2-service" {
+  name            = "dash-app-2-service"
+  cluster         = aws_ecs_cluster.dash-ecs-cluster.id
+  task_definition = aws_ecs_task_definition.dash-app-2.arn
+  desired_count   = 1
+  launch_type     = "FARGATE"
+
+  load_balancer {
+    target_group_arn = aws_lb_target_group.dash-app-2-tg.arn
+    container_name   = "dash-app-2"
     container_port   = 8050
   }
 
