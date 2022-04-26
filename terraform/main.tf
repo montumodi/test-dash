@@ -93,15 +93,13 @@ resource "aws_route_table_association" "public-subnet-public-route-table-b" {
 }
 
 resource "aws_eip" "elastic-ip" {
-  vpc = true
-
   # To ensure proper ordering, it is recommended to add an explicit dependency
   # on the Internet Gateway for the VPC.
   depends_on = [aws_internet_gateway.gw]
 }
 
 resource "aws_nat_gateway" "dash-public-nat-gateway" {
-  allocation_id = aws_eip.elastic-ip.id
+  allocation_id = aws_eip.elastic-ip.allocation_id
   subnet_id     = aws_subnet.public-subet-zone-a.id
 
   tags = {
@@ -141,24 +139,14 @@ resource "aws_ecs_cluster" "dash-ecs-cluster" {
   name = "dash-ecs-cluster"
 }
 
-resource "aws_ecs_cluster_capacity_providers" "dash-ecs-cluster" {
-  cluster_name = aws_ecs_cluster.dash-ecs-cluster.name
-
-  capacity_providers = ["FARGATE"]
-
-  default_capacity_provider_strategy {
-    base              = 1
-    weight            = 100
-    capacity_provider = "FARGATE"
-  }
-}
-
 resource "aws_ecs_task_definition" "dash-app-1" {
   family                   = "dash-app-1"
   requires_compatibilities = ["FARGATE"]
   network_mode             = "awsvpc"
   cpu                      = 512
   memory                   = 1024
+  task_role_arn = "arn:aws:iam::640935740154:role/ecsTaskExecutionRole"
+  execution_role_arn = "arn:aws:iam::640935740154:role/ecsTaskExecutionRole"
   container_definitions    = <<TASK_DEFINITION
 [
         {
@@ -187,6 +175,8 @@ resource "aws_ecs_task_definition" "dash-app-2" {
   network_mode             = "awsvpc"
   cpu                      = 512
   memory                   = 1024
+  task_role_arn = "arn:aws:iam::640935740154:role/ecsTaskExecutionRole"
+  execution_role_arn = "arn:aws:iam::640935740154:role/ecsTaskExecutionRole"
   container_definitions    = <<TASK_DEFINITION
 [
         {
@@ -222,6 +212,14 @@ resource "aws_security_group" "Load-Balancer-SG" {
     cidr_blocks      = ["0.0.0.0/0"]
   }
 
+  egress {
+    description      = "Allow access from everywhere"
+    cidr_blocks      = ["0.0.0.0/0"]
+    from_port = 0
+    to_port = 0
+    protocol = "-1"
+  }
+
   tags = {
     Name = "Load-Balancer-SG"
   }
@@ -238,6 +236,14 @@ resource "aws_security_group" "Dash-SG" {
     to_port          = 8050
     protocol         = "tcp"
     security_groups = [aws_security_group.Load-Balancer-SG.id]
+  }
+
+  egress {
+    description      = "Allow access from everywhere"
+    cidr_blocks      = ["0.0.0.0/0"]
+    from_port = 0
+    to_port = 0
+    protocol = "-1"
   }
 
   tags = {
@@ -301,6 +307,7 @@ resource "aws_ecs_service" "dash-app-1-service" {
   cluster         = aws_ecs_cluster.dash-ecs-cluster.id
   task_definition = aws_ecs_task_definition.dash-app-1.arn
   desired_count   = 1
+  launch_type     = "FARGATE"
 
   load_balancer {
     target_group_arn = aws_lb_target_group.dash-app-1-tg.arn
