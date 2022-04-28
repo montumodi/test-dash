@@ -22,14 +22,34 @@ resource "aws_ecs_cluster" "dash-ecs-cluster" {
   name = "dash-ecs-cluster"
 }
 
+resource "aws_iam_role" "ecs_task_execution_iam_role" {
+  name = "ecs_task_execution_iam_role"
+
+  assume_role_policy = jsonencode({
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "",
+            "Effect": "Allow",
+            "Principal": {
+                "Service": "ecs-tasks.amazonaws.com"
+            },
+            "Action": "sts:AssumeRole"
+        }
+    ]
+  })
+
+  managed_policy_arns = ["arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"]
+}
+
 resource "aws_ecs_task_definition" "dash-app-1" {
   family                   = "dash-app-1"
   requires_compatibilities = ["FARGATE"]
   network_mode             = "awsvpc"
   cpu                      = 512
   memory                   = 1024
-  task_role_arn            = "arn:aws:iam::640935740154:role/ecsTaskExecutionRole"
-  execution_role_arn       = "arn:aws:iam::640935740154:role/ecsTaskExecutionRole"
+  task_role_arn            = aws_iam_role.ecs_task_execution_iam_role.arn
+  execution_role_arn       = aws_iam_role.ecs_task_execution_iam_role.arn
   container_definitions    = <<TASK_DEFINITION
 [
         {
@@ -58,8 +78,8 @@ resource "aws_ecs_task_definition" "dash-app-2" {
   network_mode             = "awsvpc"
   cpu                      = 512
   memory                   = 1024
-  task_role_arn            = "arn:aws:iam::640935740154:role/ecsTaskExecutionRole"
-  execution_role_arn       = "arn:aws:iam::640935740154:role/ecsTaskExecutionRole"
+  task_role_arn            = aws_iam_role.ecs_task_execution_iam_role.arn
+  execution_role_arn       = aws_iam_role.ecs_task_execution_iam_role.arn
   container_definitions    = <<TASK_DEFINITION
 [
         {
