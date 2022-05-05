@@ -104,19 +104,19 @@ TASK_DEFINITION
 
 resource "aws_security_group" "Load-Balancer-SG" {
   name        = "Load-Balancer-SG"
-  description = "SG to allow access from everywhere on port 80"
+  description = "SG to allow access from with in vpc"
   vpc_id      = module.my_vpc_module.vpc_id
 
   ingress {
-    description = "Allow access from everywhere"
+    description = "Allow access from within vpc"
     from_port   = 80
     to_port     = 80
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
+    cidr_blocks = ["10.0.0.0/16"]
   }
 
   egress {
-    description = "Allow access from everywhere"
+    description = "Allow access from within vpc"
     cidr_blocks = ["0.0.0.0/0"]
     from_port   = 0
     to_port     = 0
@@ -178,10 +178,10 @@ resource "aws_lb_target_group" "dash-app-2-tg" {
 
 resource "aws_lb" "dash-load-balancer" {
   name               = "dash-load-balancer"
-  internal           = false
+  internal           = true
   load_balancer_type = "application"
   security_groups    = [aws_security_group.Load-Balancer-SG.id]
-  subnets            = [module.my_vpc_module.public_subnet_a_id, module.my_vpc_module.public_subnet_b_id]
+  subnets            = [module.my_vpc_module.private_subnet_a_id, module.my_vpc_module.private_subnet_b_id]
 }
 
 resource "aws_lb_listener" "default_listener" {
